@@ -27,6 +27,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import com.mergimrama.criminalintent.model.Crime;
+import com.mergimrama.criminalintent.model.Suspect;
 
 import java.util.Date;
 import java.util.UUID;
@@ -54,7 +55,7 @@ public class CrimeFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
-        mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mCrime = CrimeLab.getInstance(getActivity()).getCrime(crimeId);
         setHasOptionsMenu(true);
     }
 
@@ -138,7 +139,7 @@ public class CrimeFragment extends Fragment {
         });
 
         if (mCrime.getSuspect() != null) {
-            mSuspectButton.setText(mCrime.getSuspect());
+            mSuspectButton.setText(mCrime.getSuspect().getName());
         }
 
         PackageManager packageManager = getActivity().getPackageManager();
@@ -150,13 +151,17 @@ public class CrimeFragment extends Fragment {
         mDialButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + mCrime.getSuspectPhoneNumber()));
-                startActivity(intent);
+                Uri uri = Uri.parse("tel:" + mCrime.getSuspect().getPhoneNumber());
+                Intent callIntent = new Intent(Intent.ACTION_DIAL, uri);
+                startActivity(callIntent);
             }
         });
 
         if (mCrime.getSuspect() != null) {
-            mDialButton.setText(mCrime.getSuspectPhoneNumber());
+            mSuspectButton.setText(mCrime.getSuspect().getName());
+            mDialButton.setText(mCrime.getSuspect().getPhoneNumber());
+        } else {
+            mDialButton.setEnabled(false);
         }
 
         return v;
@@ -190,12 +195,15 @@ public class CrimeFragment extends Fragment {
             // Specify which fields you want your query to return
             // values for.
             String[] queryFields = new String[]{
-                    ContactsContract.Contacts.DISPLAY_NAME
+                    ContactsContract.Contacts.DISPLAY_NAME,
+                    ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.HAS_PHONE_NUMBER
             };
             // Perform your query - the contactUri is like a "where"
             // clause here
             Cursor c = getActivity().getContentResolver()
                     .query(contactUri, queryFields, null, null, null);
+
             try {
                 // Double-check that you actually got results
                 if (c.getCount() == 0) {
@@ -204,42 +212,59 @@ public class CrimeFragment extends Fragment {
                 // Pull out the first column of the first row of data -
                 // that is your suspect's name.
                 c.moveToFirst();
-                String suspect = c.getString(0);
+                String suspectName = c.getString(0);
+                int _id = c.getInt(1);
+                int hasPhone = c.getInt(2);
+
+                Suspect suspect = updateAndGetSuspect(_id + "", suspectName);
+
+                if (hasPhone > 0) {
+                    String[] phoneQueryFields = new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER};
+                    Cursor phoneCursor = getActivity().getContentResolver().
+                            query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                    phoneQueryFields,
+                                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = '" + _id + "'",
+                                    null, null);
+                    try {
+                        if (phoneCursor.getCount() == 0) {
+                            return;
+                        }
+                        phoneCursor.moveToFirst();
+                        String phoneNumber = phoneCursor.getString(0);
+                        suspect.setPhoneNumber(phoneNumber);
+                    } finally {
+                        phoneCursor.close();
+                    }
+                }
                 mCrime.setSuspect(suspect);
-                mSuspectButton.setText(suspect);
+                mDialButton.setEnabled(true);
+                mSuspectButton.setText(suspect.getName());
             } finally {
                 c.close();
             }
-
-           // updateMakeAPhoneCallButton(data);
         }
     }
 
-    private void updateMakeAPhoneCallButton(Intent data) {
-        Uri contactUri = data.getData();
-        // Specify which fields you want your query to return
-        // values for.
-        String[] queryFields = new String[]{
-                ContactsContract.CommonDataKinds.Phone.NUMBER
-        };
-        // Perform your query - the contactUri is like a "where"
-        // clause here
-        Cursor c = getActivity().getContentResolver()
-                .query(contactUri, queryFields, null, null, null);
-        try {
-            // Double-check that you actually got results
-            if (c.getCount() == 0) {
-                return;
-            }
-            // Pull out the first column of the first row of data -
-            // that is your suspect's name.
-            c.moveToFirst();
-            String suspect = c.getString(0);
-            mCrime.setSuspectPhoneNumber(suspect);
-            mDialButton.setText(suspect);
-        } finally {
-            c.close();
+    private Suspect updateAndGetSuspect(String contactId, String displayName) {
+        Suspect oldSuspect = mCrime.getSuspect();
+
+        if (oldSuspect != null) {
+            oldSuspect.setCrimeCount(oldSuspect.getCrimeCount() - 1);
+            CrimeLab.getInstance(getContext()).updateSuspect(oldSuspect);
         }
+
+        Suspect newSuspect = CrimeLab.getInstance(getContext()).getSuspect(contactId);
+
+        if (newSuspect == null) {
+            newSuspect = new Suspect();
+            newSuspect.setContactId(contactId);
+            newSuspect.setName(displayName);
+            CrimeLab.getInstance(getContext()).addSuspect(newSuspect);
+        }
+
+        newSuspect.setCrimeCount(newSuspect.getCrimeCount() + 1);
+
+        return newSuspect;
     }
 
     private void updateDate() {
@@ -257,7 +282,7 @@ public class CrimeFragment extends Fragment {
         switch (item.getItemId()) {
             case R.id.menu_item_delete_crime:
                 UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
-                CrimeLab crimeLab = CrimeLab.get(getActivity());
+                CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
                 mCrime = crimeLab.getCrime(crimeId);
                 crimeLab.deleteCrime(mCrime);
                 getActivity().finish();
@@ -271,7 +296,7 @@ public class CrimeFragment extends Fragment {
     public void onPause() {
         super.onPause();
 
-        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        CrimeLab.getInstance(getActivity()).updateCrime(mCrime);
     }
 
     private String getCrimeReport() {
@@ -287,7 +312,7 @@ public class CrimeFragment extends Fragment {
 
         String displayName;
         if (mCrime.getSuspect() == null ||
-                (displayName = mCrime.getSuspect()) == null) {
+                (displayName = mCrime.getSuspect().getName()) == null) {
             displayName = getString(R.string.crime_report_no_suspect);
         } else {
             displayName = getString(R.string.crime_report_suspect, displayName);

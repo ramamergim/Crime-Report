@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.mergimrama.criminalintent.database.CrimeDbSchema.CrimeTable;
 
+import static com.mergimrama.criminalintent.database.CrimeDbSchema.*;
+
 /**
  * Created by Mergim on 03-Feb-18.
  */
@@ -27,6 +29,15 @@ public class CrimeBaseHelper extends SQLiteOpenHelper {
                 CrimeTable.Cols.DATE + ", " +
                 CrimeTable.Cols.SOLVED + ", " +
                 CrimeTable.Cols.SUSPECT + ")"
+        );
+
+        sqLiteDatabase.execSQL("create table " + SuspectTable.NAME + "(" +
+                " _id integer primary key autoincrement, " +
+                SuspectTable.Cols.UUID + ", " +
+                SuspectTable.Cols.CONTACT_ID + ", " +
+                SuspectTable.Cols.NAME + ", " +
+                SuspectTable.Cols.PHONE_NUMBER + ", " +
+                SuspectTable.Cols.CRIME_COUNT + ")"
         );
     }
 
