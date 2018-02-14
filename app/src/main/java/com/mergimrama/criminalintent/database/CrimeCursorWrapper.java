@@ -3,7 +3,7 @@ package com.mergimrama.criminalintent.database;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 
-import com.mergimrama.criminalintent.Crime;
+import com.mergimrama.criminalintent.model.Crime;
 import com.mergimrama.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 import java.util.Date;
@@ -23,11 +23,13 @@ public class CrimeCursorWrapper extends CursorWrapper {
         String title = getString(getColumnIndex(CrimeTable.Cols.TITLE));
         long date = getLong(getColumnIndex(CrimeTable.Cols.DATE));
         int isSolved = getInt(getColumnIndex(CrimeTable.Cols.SOLVED));
+        String suspect = getString(getColumnIndex(CrimeTable.Cols.SUSPECT));
 
         Crime crime = new Crime(UUID.fromString(uuidString));
-        crime.setmTitle(title);
-        crime.setmDate(new Date(date));
-        crime.setmSolved(isSolved != 0);
+        crime.setTitle(title);
+        crime.setDate(new Date(date));
+        crime.setSolved(isSolved != 0);
+        crime.setSuspect(suspect);
 
         return crime;
     }

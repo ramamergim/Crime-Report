@@ -17,6 +17,8 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+import com.mergimrama.criminalintent.model.Crime;
+
 import java.util.List;
 
 /**
@@ -63,7 +65,7 @@ public class CrimeListFragment extends Fragment {
 
     private void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
-        List<Crime> crimes = crimeLab.getmCrimes();
+        List<Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
@@ -93,14 +95,14 @@ public class CrimeListFragment extends Fragment {
 
         public void bindCrime(Crime crime) {
             mCrime = crime;
-            mTitleTextView.setText(mCrime.getmTitle());
-            mDateTextView.setText(mCrime.getmDate().toString());
-            mSolvedCheckBox.setChecked(mCrime.ismSolved());
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate().toString());
+            mSolvedCheckBox.setChecked(mCrime.isSolved());
         }
 
         @Override
         public void onClick(View view) {
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getmId());
+            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
             //startActivityForResult(intent, REQUEST_CRIME);
             startActivity(intent);
         }
@@ -169,7 +171,7 @@ public class CrimeListFragment extends Fragment {
             case R.id.menu_item_new_crime:
                 Crime crime = new Crime();
                 CrimeLab.get(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getmId());
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
                 startActivity(intent);
                 return true;
 
@@ -184,7 +186,7 @@ public class CrimeListFragment extends Fragment {
 
     private void updateSubtitle() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
-        int crimeSize = crimeLab.getmCrimes().size();
+        int crimeSize = crimeLab.getCrimes().size();
 //        String subtitle = getString(R.string.subtitle_format, crimeSize + "");
         String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural,
                 crimeSize, crimeSize);

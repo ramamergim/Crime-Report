@@ -5,11 +5,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+
+import com.mergimrama.criminalintent.model.Crime;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,13 +39,13 @@ public class CrimePagerActivity extends AppCompatActivity {
 
         mViewPager = (ViewPager) findViewById(R.id.activity_crime_pager_view_pager);
 
-        mCrimes = CrimeLab.get(this).getmCrimes();
+        mCrimes = CrimeLab.get(this).getCrimes();
         FragmentManager fragmentManager = getSupportFragmentManager();
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
             @Override
             public Fragment getItem(int position) {
                 Crime crime = mCrimes.get(position);
-                return CrimeFragment.newInstance(crime.getmId());
+                return CrimeFragment.newInstance(crime.getId());
             }
 
             @Override
@@ -54,7 +55,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         });
 
         for (int i = 0; i < mCrimes.size(); i++) {
-            if (mCrimes.get(i).getmId().equals(crimeId)) {
+            if (mCrimes.get(i).getId().equals(crimeId)) {
                 mViewPager.setCurrentItem(i);
                 break;
             }

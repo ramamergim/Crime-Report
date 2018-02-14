@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.mergimrama.criminalintent.database.CrimeBaseHelper;
 import com.mergimrama.criminalintent.database.CrimeCursorWrapper;
 import com.mergimrama.criminalintent.database.CrimeDbSchema.CrimeTable;
+import com.mergimrama.criminalintent.model.Crime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,17 @@ public class CrimeLab {
                 .getWritableDatabase();
     }
 
+    public static CrimeLab getInstance(Context context) {
+        if (sCrimeLab == null) {
+            synchronized (CrimeLab.class) {
+                if (sCrimeLab == null) {
+                    sCrimeLab = new CrimeLab(context);
+                }
+            }
+        }
+        return sCrimeLab;
+    }
+
     /*
         The insert(String, String, ContentValues) method has two important arguments, and one that is
         rarely used. The first argument is the table you want to insert into – here, CrimeTable.NAME. The last
@@ -52,13 +64,13 @@ public class CrimeLab {
     }
 
     public boolean deleteCrime(Crime crime) {
-        mDatabase.delete(CrimeTable.NAME, CrimeTable.Cols.UUID + " = ?", new String[] { crime.getmId().toString()});
+        mDatabase.delete(CrimeTable.NAME, CrimeTable.Cols.UUID + " = ?", new String[] { crime.getId().toString()});
 
         return false;
     }
 
     public void updateCrime(Crime crime) {
-        String uuidString = crime.getmId().toString();
+        String uuidString = crime.getId().toString();
         ContentValues values = getContentValues(crime);
 
         mDatabase.update(CrimeTable.NAME, values, CrimeTable.Cols.UUID + " = ?",
@@ -69,10 +81,11 @@ public class CrimeLab {
 
     private static ContentValues getContentValues(Crime crime) {
         ContentValues values = new ContentValues();
-        values.put(CrimeTable.Cols.UUID, crime.getmId().toString());
-        values.put(CrimeTable.Cols.TITLE, crime.getmTitle());
-        values.put(CrimeTable.Cols.DATE, crime.getmDate().getTime());
-        values.put(CrimeTable.Cols.SOLVED, crime.ismSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.UUID, crime.getId().toString());
+        values.put(CrimeTable.Cols.TITLE, crime.getTitle());
+        values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
+        values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
 
         return values;
     }
@@ -109,7 +122,7 @@ public class CrimeLab {
         }
     }
 
-    public List<Crime> getmCrimes() {
+    public List<Crime> getCrimes() {
         List<Crime> crimes = new ArrayList<>();
 
         CrimeCursorWrapper cursorWrapper = queryCrimes(null, null);
