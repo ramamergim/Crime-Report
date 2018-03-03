@@ -11,3 +11,8 @@ Pressing the Back button would destroy the detail activity and return you to the
 select another crime.
 
 //working
+
+## Download the app
+
+If you want to have this app on your phone, you can download it below:
+[Criminal Intent.apk]("http://www.mediafire.com/file/66enno55w8w7d65/CriminalIntent.apk")
