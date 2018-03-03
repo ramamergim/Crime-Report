@@ -15,4 +15,4 @@ select another crime.
 ## Download the app
 
 If you want to have this app on your phone, you can download it below:
-[Criminal Intent.apk]("http://www.mediafire.com/file/66enno55w8w7d65/CriminalIntent.apk")
+* [Criminal Intent.apk](http://www.mediafire.com/file/66enno55w8w7d65/CriminalIntent.apk) - Download from MediaFire
